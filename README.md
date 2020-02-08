@@ -1,6 +1,6 @@
-# README #
+# PyCGR #
 
-This README would normally document whatever steps are necessary to get your application up and running.
+PyCGR is Python-based Contact Graph Routing (CGR) library that serves as a pedagogic reference of the popular routing algorithm for scheduled Delay Tolerant Networks (DTNs).
 
 ### What is this repository for? ###
 
