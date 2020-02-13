@@ -192,7 +192,7 @@ class Route:
 
     # utility methods
     def __repr__(self):
-        return "to:%s|via:%s(%03d,%03d)|bdt:%s|hops:%s|rvl:%s|conf:%s|%s" % \
+        return "to:%s|via:%s(%03d,%03d)|bdt:%s|hops:%s|vol:%s|conf:%s|%s" % \
                (self.to_node, self.next_node, self.from_time, self.to_time, self.best_delivery_time, len(self.get_hops()),
                 self.volume, self.confidence, self.get_hops())
 
@@ -220,7 +220,6 @@ class Bundle:
 # load contact plan file with the format:
 # a contact +<start> +<end> <from> <to> <rate> <range>
 def cp_load(file_name, max_contacts=None):
-    print("Loading contact plan...")
     __contact_plan = []
     nodes = set()
     with open(file_name, 'r') as cf:
@@ -240,7 +239,7 @@ def cp_load(file_name, max_contacts=None):
             if len(__contact_plan) == max_contacts:
                 break
 
-    print('Done. %s contacts were read.' % len(__contact_plan))
+    print('Load contact plan: %s contacts were read.' % len(__contact_plan))
     # print(__contact_plan)
     return __contact_plan
 
@@ -781,10 +780,10 @@ def plot_contact_graph(name, contact_plan, source=None, destination=None):
 # compute candidate routes for a bundle
 def fwd_candidate(curr_time, curr_node, contact_plan, bundle, routes, excluded_nodes):
 
+    debug = False
+
     return_to_sender = False
     candidate_routes = []
-
-    print("forwarding at curr_time:", curr_time, "curr_node:", curr_node)
 
     for route in routes:
 
@@ -792,7 +791,8 @@ def fwd_candidate(curr_time, curr_node, contact_plan, bundle, routes, excluded_n
         if not return_to_sender:
             if route.next_node is bundle.sender:
                 excluded_nodes.append(route.next_node)
-                print("preparation: next node is sender", route.next_node)
+                if debug:
+                    print("preparation: next node is sender", route.next_node)
                 continue
 
         # 3.2.6.9 a)
@@ -802,13 +802,15 @@ def fwd_candidate(curr_time, curr_node, contact_plan, bundle, routes, excluded_n
 
         # 3.2.6.9 b)
         if route.next_node in excluded_nodes:
-            print("not candidate: next node in excluded nodes list")
+            if debug:
+                print("not candidate: next node in excluded nodes list")
             continue
 
         # 3.2.6.9 c)
         for contact in route.hops:
             if contact.to is curr_node:
-                print("not candidate: contact in route tx to current node")
+                if debug:
+                    print("not candidate: contact in route tx to current node")
                 continue
 
         # 3.2.6.9 d) calculate eto and if it is later than 1st contact end time, ignore
@@ -825,7 +827,8 @@ def fwd_candidate(curr_time, curr_node, contact_plan, bundle, routes, excluded_n
         backlog_lien = residual_backlog / route.hops[0].rate
         early_tx_opportunity = adjusted_start_time + backlog_lien
         if early_tx_opportunity > route.hops[0].end:
-            print("not candidate: earlier transmission opportunity is later than end of 1st contact")
+            if debug:
+                print("not candidate: earlier transmission opportunity is later than end of 1st contact")
             continue
 
         # 3.2.6.9 e) use eto to compute projected arrival time
@@ -841,7 +844,8 @@ def fwd_candidate(curr_time, curr_node, contact_plan, bundle, routes, excluded_n
             prev_last_byte_arr_time = contact.last_byte_arr_time
         proj_arr_time = prev_last_byte_arr_time
         if proj_arr_time > bundle.deadline:
-            print("not candidate: projected arrival time is later than deadline")
+            if debug:
+                print("not candidate: projected arrival time is later than deadline")
             continue
 
         # 3.2.6.9 f) if route depleted for bundle priority P, ignore
@@ -849,7 +853,8 @@ def fwd_candidate(curr_time, curr_node, contact_plan, bundle, routes, excluded_n
         min_effective_volume_limit = sys.maxsize
         for contact in route.hops:
             if reserved_volume_p >= contact.volume:
-                print("not candidate: route depleted for bundle priority")
+                if debug:
+                    print("not candidate: route depleted for bundle priority")
                 continue
 
             effective_start_time = contact.first_byte_tx_time
@@ -866,16 +871,19 @@ def fwd_candidate(curr_time, curr_node, contact_plan, bundle, routes, excluded_n
                 min_effective_volume_limit = contact.effective_volume_limit
         route_volume_limit = min_effective_volume_limit
         if route_volume_limit <= 0:
-            print("not candidate: route is depleted for the bundle priority")
+            if debug:
+                print("not candidate: route is depleted for the bundle priority")
             continue
 
         # 3.2.6.9 g) if frag is False and route rvl(P) < bundle.evc, ignore
         if not bundle.fragment:
             if route_volume_limit < bundle.evc:
-                print("not candidate: route volume limit is less than bundle evc and no fragment allowed")
+                if debug:
+                    print("not candidate: route volume limit is less than bundle evc and no fragment allowed")
                 continue
 
-        print("new candidate:", route)
+        if debug:
+            print("new candidate:", route)
         candidate_routes.append(route)
 
     candidate_routes.sort()
