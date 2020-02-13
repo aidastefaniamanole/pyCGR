@@ -1,4 +1,4 @@
-# PyCGR #
+# pyCGR #
 
 PyCGR is Python-based Contact Graph Routing (CGR) library that serves as a pedagogic reference of the popular routing algorithm for scheduled Delay Tolerant Networks (DTNs). 
 
