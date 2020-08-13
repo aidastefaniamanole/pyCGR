@@ -11,3 +11,7 @@ PyCGR is Python-based Contact Graph Routing (CGR) library that serves as a pedag
 ### Contact ###
 
 Reach me at <juanfraire@gmail.com>.
+
+### Links ###
+
+* [pySPSN](https://bitbucket.org/olivier-dj/pyspsn)
